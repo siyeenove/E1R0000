@@ -22,6 +22,8 @@ eArm can be uploaded code using Arduino® IDE.
 
 * **Manually download in browser**
 
+	Go to the github repository: https://github.com/siyeenove/E1R0000
+
 	Click the green "**Code**" button, then click "**Download ZIP**" button in the pop-up window.
 
 ## Support
