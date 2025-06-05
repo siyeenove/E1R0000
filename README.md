@@ -22,7 +22,7 @@ eArm can be uploaded code using Arduino® IDE.
 
 * **Manually download in browser**
 
-	Click the green "**Clone**" button, then click "**Download ZIP**" button in the pop-up window.
+	Click the green "**Code**" button, then click "**Download ZIP**" button in the pop-up window.
 
 ## Support
 
