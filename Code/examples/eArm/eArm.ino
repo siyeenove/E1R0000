@@ -60,7 +60,7 @@ int sensitivity = 1600;  //0-2048
 // Speed of servo
 char servoSpeed = 1;
 // time of servo
-int servoDelayTime = 5;
+int servoDelayTime = 10;
 
 // Create one task handle and initialize it.
 TaskHandle_t TASK_HandleOne = NULL;
