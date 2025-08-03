@@ -40,7 +40,7 @@ If you meet any difficulties, please contact our support team for help.
 
 Please send an email to:
 
-📧 siyeenove@outlook.com    
+📧 support@siyeenove.com   
 
 ⏳ Typical response time: 1 business day
 
@@ -52,7 +52,7 @@ Please visit the following page to purchase our products:
 
 Business customers please contact us through the following email address:
 
-📧 siyeenove@outlook.com
+📧 support@siyeenove.com
 
 ## Copyright
 
