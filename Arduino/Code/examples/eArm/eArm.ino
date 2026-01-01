@@ -6,6 +6,7 @@
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include "app_server.h"
+#include <Ticker.h>
 
 // Define Network SSID & Password
 // Set ap to 1 to use mCar as Standalone Access Point with default IP 192.168.4.1
@@ -35,6 +36,9 @@ char AservoPin = 4;  // GPIO pin used to connect the servo control (digital out)
 char BservoPin = 5;
 char CservoPin = 6;
 char DservoPin = 7;
+
+Ticker Timer1;
+unsigned int DservoTicks = 0;
 
 // Left joystick
 char left_joystick_UpDownPin = 0;  // GPIO pin used to connect the servo control (digital out)
@@ -100,6 +104,11 @@ void TASK_ONE(void* param) {
   }
 }
 
+void callback1() {
+  if(DservoTicks < 40){
+  DservoTicks++;
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -171,6 +180,9 @@ void setup() {
   pinMode(right_joystick_KeyPin, INPUT_PULLUP);
   pinMode(beepPin, OUTPUT);
   digitalWrite(beepPin, beepOff);
+
+  // Periodic trigger
+  Timer1.attach(1, callback1);  // Execute callback1 every 1 seconds
 }
 
 void loop() {
@@ -201,14 +213,16 @@ void loop() {
     }
 
     if (analogRead(right_joystick_LeftRightPin) > (2048 + sensitivity)) {
+      DservoTicks = 0;
       dServoAngle = dServoAngle + servoSpeed;
       if (dServoAngle > 180) { dServoAngle = 180; }
       delay(servoDelayTime);
       //Serial.println(analogRead(right_joystick_LeftRightPin));
     }
     if (analogRead(right_joystick_LeftRightPin) < (2048 - sensitivity)) {
+      DservoTicks = 0;
       dServoAngle = dServoAngle - servoSpeed;
-      if (dServoAngle < 18) { dServoAngle = 18; }
+      if (dServoAngle < 10) { dServoAngle = 10; }
       delay(servoDelayTime);
     }
 
@@ -280,15 +294,17 @@ void loop() {
     }
 
     if (App.dAddKey == 1) {
+      DservoTicks = 0;
       Serial.println("D+ key is pressed!");
       if (dServoAngle > 0) {
         dServoAngle = dServoAngle - servoSpeed;
-        if (dServoAngle < 18) { dServoAngle = 18; }
+        if (dServoAngle < 10) { dServoAngle = 10; }
         delay(servoDelayTime);
       }
     }
 
     if (App.dMinKey == 1) {
+      DservoTicks = 0;
       Serial.println("D- key is pressed!");
       if (dServoAngle < 180) {
         dServoAngle = dServoAngle + servoSpeed;
@@ -300,5 +316,11 @@ void loop() {
   Aservo.write(aServoAngle);
   Bservo.write(bServoAngle);
   Cservo.write(cServoAngle);
-  Dservo.write(dServoAngle);
+
+  // Prevent the servo of the claws from overheating.
+  if(DservoTicks < 40){
+    Dservo.write(dServoAngle);
+  }else{
+    Dservo.release();
+  }
 }
