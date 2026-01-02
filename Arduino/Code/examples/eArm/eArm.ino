@@ -105,9 +105,12 @@ void TASK_ONE(void* param) {
 }
 
 void callback1() {
-  if(DservoTicks < 40){
-  DservoTicks++;
+  // Prevent the servo of the claws from overheating.
+  if(DservoTicks < 500){
+    DservoTicks++;
   }
+  Dservo.release();
+  Dservo.release();
 }
 
 void setup() {
@@ -182,7 +185,8 @@ void setup() {
   digitalWrite(beepPin, beepOff);
 
   // Periodic trigger
-  Timer1.attach(1, callback1);  // Execute callback1 every 1 seconds
+  // The timing time should be greater than 20ms.
+  Timer1.attach_ms(80, callback1);  // Execute callback1 every 80 milliseconds
 }
 
 void loop() {
@@ -318,9 +322,7 @@ void loop() {
   Cservo.write(cServoAngle);
 
   // Prevent the servo of the claws from overheating.
-  if(DservoTicks < 40){
+  if(DservoTicks < 500){
     Dservo.write(dServoAngle);
-  }else{
-    Dservo.release();
   }
 }
