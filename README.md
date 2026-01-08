@@ -1,14 +1,16 @@
 # SIYEENOVE eArm - ESP32-C3 WiFi Robotic Arm Kit
 
-An educational robotic arm designed for learning embedded programming with ESP32 using Arduino (C/C++).
+An educational robotic arm designed for learning embedded programming with ESP32 using Arduino (C/C++) and Thonny.
 
 Esp32 C3 chip is manufactured by Espressif®. 
 
 [https://www.espressif.com](https://www.espressif.com)
 
-eArm can be uploaded code using Arduino® IDE.
+eArm can be uploaded code using Arduino® IDE and Thonny IDE.
 
 [Arduino® is a trademark of Arduino LLC](https://www.arduino.cc).
+
+[Thonny IDE](https://thonny.org/).
 
 ## Download
 
