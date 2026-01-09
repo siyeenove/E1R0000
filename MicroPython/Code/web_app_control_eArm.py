@@ -110,7 +110,8 @@ class Servo:
                 self.ticker = 0
             else:
                 if self.save_mode == 1:
-                    if self.ticker < 1000:
+                    # After 40 seconds, turn off the pulse output
+                    if self.ticker < 1000:    
                         self.set_angle(self.current_angle)
                         time.sleep_ms(30)
                         self.ticker = self.ticker + 1
@@ -200,7 +201,7 @@ def handle_command(params):
         servo_D.start_increase() if params['d_minus'] == '1' else servo_D.stop_adjust()
     elif 'd_plus' in params:
         servo_D.start_decrease() if params['d_plus'] == '1' else servo_D.stop_adjust()
-    # Buzzer - 使用不同的状态码
+    # Buzzer - Use different status codes
     elif 'buzzer' in params:
         if params['buzzer'] == 'on':
             buzzer.on()
@@ -232,9 +233,9 @@ def send_response(client, content, ctype="text/html"):
 # ==================== HTML Generation ====================
 def generate_html():
     """Generate HTML with current buzzer state"""
-    wifi_status = "WiFi: Connected"  # 简化WiFi状态显示
+    wifi_status = "WiFi: Connected"  
     
-    # 根据当前蜂鸣器状态设置初始值
+    # Set the initial value based on the current buzzer status
     buzzer_class = "buzzer-btn" if buzzer_state else "buzzer-off"
     buzzer_icon = "🔊" if buzzer_state else "🔇"
     

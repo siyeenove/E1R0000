@@ -246,6 +246,7 @@ class Servo:
             else:
                 # save_mode
                 if self.save_mode == 1:
+                    # After 40 seconds, turn off the pulse output
                     if self.ticker < 1000:
                         self.set_angle(self.current_angle)
                         time.sleep_ms(30)
