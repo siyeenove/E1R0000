@@ -5,8 +5,13 @@
 */
 #include <WiFi.h>
 #include <ESP32Servo.h>
-#include "app_server.h"
-#include <Ticker.h>
+//#include <Ticker.h>
+#include "src/eArm.h"
+#include "src/app_server.h"
+
+eArm arm;
+int xL,yL,xR,yR;
+unsigned long t_claw = 0;
 
 // Define Network SSID & Password
 // Set ap to 1 to use mCar as Standalone Access Point with default IP 192.168.4.1
@@ -20,82 +25,132 @@ int channel = 11;       // Channel for AP Mode
 int hidden = 0;         // Probably leave at zero
 int maxconnection = 1;  // Only one device is allowed to connect
 
-int aServoAngle = 90;
-int bServoAngle = 120;
-int cServoAngle = 60;
-int dServoAngle = 90;
-int Volt = 21;
-
-Servo Aservo;  // create servo object to control a servo, servo1
-Servo Bservo;  //servo2
-Servo Cservo;  //servo3
-Servo Dservo;  //servo4
-
-// Possible PWM GPIO pins on the ESP32-C3: 0(used by on-board button),1-7,8(used by on-board LED),9-10,18-21
-char AservoPin = 4;  // GPIO pin used to connect the servo control (digital out)
-char BservoPin = 5;
-char CservoPin = 6;
-char DservoPin = 7;
-
-Ticker Timer1;
-unsigned int DservoTicks = 0;
-
-// Left joystick
-char left_joystick_UpDownPin = 0;  // GPIO pin used to connect the servo control (digital out)
-char left_joystick_LeftRightPin = 1;
-char left_joystick_KeyPin = 8;
-
-// Right joystick
-char right_joystick_UpDownPin = 2;  // GPIO pin used to connect the servo control (digital out)
-char right_joystick_LeftRightPin = 3;
-char right_joystick_KeyPin = 10;
+//Ticker Timer1;
+//unsigned int DservoTicks = 0;
 
 // Right joystick
 char beepPin = 9;
 #define beepOn 0
 #define beepOff 1
-#define beepFreq 500
+#define beepFreq 1000
 #define beepDelayTime 1000000 / beepFreq
 
 // 0: joystick, 1: web app
 char ControlMode = 0;
-// The sensitivity of the joystick
-int sensitivity = 1800;  //0-2048
-// Speed of servo
-char servoSpeed = 1;
-// time of servo
-int servoDelayTime = 10;
 
 // Create one task handle and initialize it.
 TaskHandle_t TASK_HandleOne = NULL;
 
+///////////////////////////////////////////////////////////////
+void turn_lr(void){
+  if(yL<=1500 || 2595<yL){
+    if(0<=yL && yL<=300)   {arm.right(5);return;}
+    if(3795<yL && yL<=4095){arm.left(5);return;}  
+    if(300<yL && yL<=600)  {arm.right(10);return;}
+    if(3495<yL && yL<=3795){arm.left(10);return;}
+    if(600<yL && yL<=900)  {arm.right(15);return;}
+    if(3195<yL && yL<=3495){arm.left(15);return;}
+    if(900<yL && yL<=1200) {arm.right(20);return;}
+    if(2895<yL && yL<=3195){arm.left(20);return;}
+    if(1200<yL && yL<=1500){arm.right(25);return;}
+    if(2595<yL && yL<=2895){arm.left(25);return;}
+  }
+}
+///////////////////////////////////////////////////////////////
+// Upper Arm
+void turn_ua_ud(void){
+  if(xL<=1500 || 2595<xL){
+    if(0<=xL && xL<=300)   {arm.ua_down(10);return;}
+    if(3795<xL && xL<=4095){arm.ua_up(10);return;} 
+    if(300<xL && xL<=600)  {arm.ua_up(20);return;}
+    if(3495<xL && xL<=3795){arm.ua_down(20);return;}
+    if(600<xL && xL<=900)  {arm.ua_up(25);return;}
+    if(3195<xL && xL<=3495){arm.ua_down(25);return;}
+    if(900<xL && xL<=1200) {arm.ua_up(30);return;}
+    if(2895<xL && xL<=3195){arm.ua_down(30);return;}
+    if(1200<xL && xL<=1500){arm.ua_up(35);return;}
+    if(2595<xL && xL<=2895){arm.ua_down(35);return;} 
+  }
+}
+///////////////////////////////////////////////////////////////
+// Forearm
+void turn_fa_ud(void){
+  if(xR<=1500 || 2595<xR){
+    if(0<=xR && xR<=300)   {arm.fa_down(10);return;}
+    if(3795<xR && xR<=4095){arm.fa_up(10);return;} 
+    if(300<xR && xR<=600)  {arm.fa_up(20);return;}
+    if(3495<xR && xR<=3795){arm.fa_down(20);return;}
+    if(600<xR && xR<=900)  {arm.fa_up(25);return;}
+    if(3195<xR && xR<=3495){arm.fa_down(25);return;}
+    if(900<xR && xR<=1200) {arm.fa_up(30);return;}
+    if(2895<xR && xR<=3195){arm.fa_down(30);return;}
+    if(1200<xR && xR<=1500){arm.fa_up(35);return;}
+    if(2595<xR && xR<=2895){arm.fa_down(35);return;} 
+  }
+}
+///////////////////////////////////////////////////////////////
+void claw(void){
+  if(yR<=1500 || 2595<yR){
+    t_claw = millis();
+
+    if(0<=yR && yR<=300)   {arm.clawClose(5);return;}
+    if(3795<yR && yR<=4095){arm.clawOpen(5);return;} 
+    if(300<yR && yR<=600)  {arm.clawClose(5);return;}
+    if(3495<yR && yR<=3795){arm.clawOpen(5);return;}
+    if(600<yR && yR<=900)  {arm.clawClose(10);return;}
+    if(3195<yR && yR<=3495){arm.clawOpen(10);return;}
+    if(900<yR && yR<=1200) {arm.clawClose(15);return;}
+    if(2895<yR && yR<=3195){arm.clawOpen(15);return;}
+    if(1200<yR && yR<=1500){arm.clawClose(20);return;}
+    if(2595<yR && yR<=2895){arm.clawOpen(20);return;} 
+  }
+
+  if(millis() - t_claw > 45000){
+    // Prevent the servo of the claws from overheating.
+    arm.clawRelease();
+  }
+}
+///////////////////////////////////////////////////////////////
+void date_processing(int *x,int *y){
+  if(abs(2048-*x)>abs(2048-*y))
+    {*y = 2048;}
+  else
+    {*x = 2048;}
+}
+///////////////////////////////////////////////////////////////
 // The function body of task, since the input parameter is NULL,
 // so the function body needs to be void * parameter, otherwise an error is reported.
 void TASK_ONE(void* param) {
   for (;;) {
     //Select control mode
-    if (digitalRead(left_joystick_KeyPin) == LOW) {
-      delay(5);                                        // Eliminate key jitter.
-      if (digitalRead(left_joystick_KeyPin) == LOW) {  // The key is pressed.
+    if (!arm.JoyStickR.read_z()) {
+      delay(5);                                       // Eliminate key jitter.
+      if (!arm.JoyStickR.read_z()) {                  // The key is pressed.
         delay(20);
         ControlMode = 1 - ControlMode;
         if (ControlMode == 0) {
           Serial.println("Joystick Control.");
+          for(int i=0; i<600; i++){
+            digitalWrite(beepPin, beepOn);
+            delayMicroseconds(200);
+            digitalWrite(beepPin, beepOff);
+            delayMicroseconds(300);
+          }
         } else {
           Serial.println("Web app Control.");
-          for(char i=0; i<10; i++){
+          for(char i=0; i<100; i++){
             digitalWrite(beepPin, beepOn);
-            delayMicroseconds(1000);
+            delayMicroseconds(200);
             digitalWrite(beepPin, beepOff);
-            delayMicroseconds(1000);
+            delayMicroseconds(300);
           }
         }
-        while (digitalRead(left_joystick_KeyPin) == LOW);  // The key is released.
+        while (!arm.JoyStickR.read_z());  // The key is released.
       }
     }
 
     // beep
-    if (digitalRead(right_joystick_KeyPin) == LOW || App.beepkey == 1) {
+    while (!arm.JoyStickL.read_z() || App.beepkey == 1) {
       digitalWrite(beepPin, beepOn);
       delayMicroseconds(beepDelayTime);
       digitalWrite(beepPin, beepOff);
@@ -103,16 +158,17 @@ void TASK_ONE(void* param) {
     }
   }
 }
-
+///////////////////////////////////////////////////////////////
+/*
 void callback1() {
   // Prevent the servo of the claws from overheating.
   if(DservoTicks < 500){
     DservoTicks++;
   }
-  Dservo.release();
-  Dservo.release();
+  arm.clawRelease();
 }
-
+*/
+///////////////////////////////////////////////////////////////
 void setup() {
   Serial.begin(115200);
 
@@ -146,28 +202,14 @@ void setup() {
   delay(1000);
   displayWindow("P: 100%");
 
-  // Allow allocation of all timers
-  ESP32PWM::allocateTimer(0);
-  ESP32PWM::allocateTimer(1);
-  ESP32PWM::allocateTimer(2);
-  ESP32PWM::allocateTimer(3);
-  Aservo.setPeriodHertz(50);            // Standard 50hz servo
-  Aservo.attach(AservoPin, 500, 2400);  // attaches the servo on pin 18 to the servo object
-                                        // using SG90 servo min/max of 500us and 2400us
-                                        // for MG995 large servo, use 1000us and 2000us,
-                                        // which are the defaults, so this line could be
-                                        // "myservo.attach(servoPin);"
-  Bservo.setPeriodHertz(50);
-  Bservo.attach(BservoPin, 500, 2400);
-  Cservo.setPeriodHertz(50);
-  Cservo.attach(CservoPin, 500, 2400);
-  Dservo.setPeriodHertz(50);
-  Dservo.attach(DservoPin, 500, 2400);
+  //arm of servo motor connection pins
+  arm.ServoAttach(4,5,6,7);
 
-  Aservo.write(aServoAngle);  // set the servo position according to the scaled value
-  Bservo.write(bServoAngle);
-  Cservo.write(cServoAngle);
-  Dservo.write(dServoAngle);
+  //arm of joy stick connection pins : xL,yL,zL,xR,yR,zR
+  arm.JoyStickAttach(0,1,10,2,3,8);
+
+  pinMode(beepPin, OUTPUT);
+  digitalWrite(beepPin, beepOff);
 
   //Define the thread
   xTaskCreate(
@@ -179,150 +221,62 @@ void setup() {
     &TASK_HandleOne  // Task handle
   );
 
-  pinMode(left_joystick_KeyPin, INPUT);
-  pinMode(right_joystick_KeyPin, INPUT_PULLUP);
-  pinMode(beepPin, OUTPUT);
-  digitalWrite(beepPin, beepOff);
-
   // Periodic trigger
   // The timing time should be greater than 20ms.
-  Timer1.attach_ms(80, callback1);  // Execute callback1 every 80 milliseconds
+  //Timer1.attach_ms(80, callback1);  // Execute callback1 every 80 milliseconds
 }
-
+///////////////////////////////////////////////////////////////
 void loop() {
   //Joystick Control
   if (ControlMode == 0) {
-    if (analogRead(left_joystick_LeftRightPin) > (2048 + sensitivity)) {
-      aServoAngle = aServoAngle + servoSpeed;
-      if (aServoAngle > 180) { aServoAngle = 180; }
-      delay(servoDelayTime);
-      //Serial.println(analogRead(left_joystick_LeftRightPin));
-    }
-    if (analogRead(left_joystick_LeftRightPin) < (2048 - sensitivity)) {
-      aServoAngle = aServoAngle - servoSpeed;
-      if (aServoAngle < 0) { aServoAngle = 0; }
-      delay(servoDelayTime);
-    }
-
-    if (analogRead(left_joystick_UpDownPin) > (2048 + sensitivity)) {
-      bServoAngle = bServoAngle + servoSpeed;
-      if (bServoAngle > 180) { bServoAngle = 180; }
-      delay(servoDelayTime);
-      Serial.println(analogRead(left_joystick_UpDownPin));
-    }
-    if (analogRead(left_joystick_UpDownPin) < (2048 - sensitivity)) {
-      bServoAngle = bServoAngle - servoSpeed;
-      if (bServoAngle < 0) { bServoAngle = 0; }
-      delay(servoDelayTime);
-    }
-
-    if (analogRead(right_joystick_LeftRightPin) > (2048 + sensitivity)) {
-      DservoTicks = 0;
-      dServoAngle = dServoAngle + servoSpeed;
-      if (dServoAngle > 180) { dServoAngle = 180; }
-      delay(servoDelayTime);
-      //Serial.println(analogRead(right_joystick_LeftRightPin));
-    }
-    if (analogRead(right_joystick_LeftRightPin) < (2048 - sensitivity)) {
-      DservoTicks = 0;
-      dServoAngle = dServoAngle - servoSpeed;
-      if (dServoAngle < 10) { dServoAngle = 10; }
-      delay(servoDelayTime);
-    }
-
-    if (analogRead(right_joystick_UpDownPin) > (2048 + sensitivity)) {
-      cServoAngle = cServoAngle - servoSpeed;
-      if (cServoAngle < 0) { cServoAngle = 0; }
-      delay(servoDelayTime);
-    }
-    if (analogRead(right_joystick_UpDownPin) < (2048 - sensitivity)) {
-      cServoAngle = cServoAngle + servoSpeed;
-      if (cServoAngle > 180) { cServoAngle = 180; }
-      delay(servoDelayTime);
-    }
+    xL = arm.JoyStickL.read_x();
+    yL = arm.JoyStickL.read_y();
+    xR = arm.JoyStickR.read_x();
+    yR = arm.JoyStickR.read_y();
+    date_processing(&xL,&yL);
+    date_processing(&xR,&yR);
   }
   //Web app Control
   else if (ControlMode == 1) {
-    if (App.aAddKey == 1) {
-      Serial.println("A+ key is pressed!");
-      if (aServoAngle < 180) {
-        aServoAngle = aServoAngle + servoSpeed;
-        if (aServoAngle > 180) { aServoAngle = 180; }
-        delay(servoDelayTime);
-      }
+    xL = 2048;
+    yL = 2048;
+    xR = 2048;
+    yR = 2048;
+
+    if (App.aAddKey == 1) {   //Serial.println("A+ key is pressed!");
+      yL = 3950;
     }
 
-    if (App.aMinKey == 1) {
-      Serial.println("A- key is pressed!");
-      if (aServoAngle > 0) {
-        aServoAngle = aServoAngle - servoSpeed;
-        if (aServoAngle < 0) { aServoAngle = 0; }
-        delay(servoDelayTime);
-      }
+    if (App.aMinKey == 1) {   //Serial.println("A- key is pressed!");
+      yL = 150;
     }
 
-    if (App.bAddKey == 1) {
-      Serial.println("B+ key is pressed!");
-      if (bServoAngle > 0) {
-        bServoAngle = bServoAngle - servoSpeed;
-        if (bServoAngle < 0) { bServoAngle = 0; }
-        delay(servoDelayTime);
-      }
+    if (App.bAddKey == 1) {  //Serial.println("B+ key is pressed!");
+      xL = 150;
     }
 
-    if (App.bMinKey == 1) {
-      Serial.println("B- key is pressed!");
-      if (bServoAngle < 180) {
-        bServoAngle = bServoAngle + servoSpeed;
-        if (bServoAngle > 180) { bServoAngle = 180; }
-        delay(servoDelayTime);
-      }
+    if (App.bMinKey == 1) {  //Serial.println("B- key is pressed!");
+      xL = 3950;
     }
 
-    if (App.cAddKey == 1) {
-      Serial.println("C+ key is pressed!");
-      if (cServoAngle < 180) {
-        cServoAngle = cServoAngle + servoSpeed;
-        if (cServoAngle > 180) { cServoAngle = 180; }
-        delay(servoDelayTime);
-      }
+    if (App.cAddKey == 1) {  //Serial.println("C+ key is pressed!");
+      xR = 150;
     }
 
-    if (App.cMinKey == 1) {
-      Serial.println("C- key is pressed!");
-      if (cServoAngle > 0) {
-        cServoAngle = cServoAngle - servoSpeed;
-        if (cServoAngle < 0) { cServoAngle = 0; }
-        delay(servoDelayTime);
-      }
+    if (App.cMinKey == 1) {  //Serial.println("C- key is pressed!");
+      xR = 3950;
     }
 
-    if (App.dAddKey == 1) {
-      DservoTicks = 0;
-      Serial.println("D+ key is pressed!");
-      if (dServoAngle > 0) {
-        dServoAngle = dServoAngle - servoSpeed;
-        if (dServoAngle < 10) { dServoAngle = 10; }
-        delay(servoDelayTime);
-      }
+    if (App.dAddKey == 1) {  //Serial.println("D+ key is pressed!");
+      yR = 3350;
     }
 
-    if (App.dMinKey == 1) {
-      DservoTicks = 0;
-      Serial.println("D- key is pressed!");
-      if (dServoAngle < 180) {
-        dServoAngle = dServoAngle + servoSpeed;
-        if (dServoAngle > 180) { dServoAngle = 180; }
-        delay(servoDelayTime);
-      }
+    if (App.dMinKey == 1) {  //Serial.println("D- key is pressed!");
+      yR = 750;
     }
   }
-  Aservo.write(aServoAngle);
-  Bservo.write(bServoAngle);
-  Cservo.write(cServoAngle);
-
-  // Prevent the servo of the claws from overheating.
-  if(DservoTicks < 500){
-    Dservo.write(dServoAngle);
-  }
+  turn_lr();
+  turn_ua_ud();
+  turn_fa_ud();
+  claw();
 }

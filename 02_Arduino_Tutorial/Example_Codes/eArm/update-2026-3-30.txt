@@ -1,0 +1,1 @@
+2026-3-28: Update the code to fix the occasional jitter when the manipulator swings up and down.
