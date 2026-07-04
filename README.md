@@ -94,4 +94,4 @@ Our services include:
 
 For more open source products, please visit:
 
-http://www.siyeenove.com
+https://www.siyeenove.com
